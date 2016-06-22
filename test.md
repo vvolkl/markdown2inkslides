@@ -1,5 +1,4 @@
-# myyyyyyyyyyyyy
-Valentin Volkl, 01.01.2000
+# Title
 
 ## Slide 1
 * bullet one 
