@@ -15,6 +15,9 @@ from simplestyle import *
 
 import mistune
 
+from my_eqtexsvg import *
+from mistune_math import MarkdownWithMath
+
 def debug_print(msg):
   """stdout of this script is interpreted as svg, so we need to log debug messages elsewhere."""
   with open('/tmp/test.txt', 'w') as tmpfile:
@@ -33,9 +36,11 @@ def handle_header(self, line):
       text = inkex.etree.Element(inkex.addNS('text','svg'))
       text.set('id', 'md2i_layer%i_slidenumber' % (self.layercounter) )
       text.text = str(self.layercounter)
+      style = {'font-size': '20px',  'font-family': 'Source Serif Pro'}
+      text.set('style', formatStyle(style))
       # lower right corner
-      text.set('x', str(11 * self.width / 12.))
-      text.set('y', str(11 * self.height / 12.))
+      text.set('x', str(11.5 * self.width / 12.))
+      text.set('y', str(11.5 * self.height / 12.))
       self.layer.append(text)
       # write title
       title = inkex.etree.Element(inkex.addNS('text','svg'))
@@ -44,7 +49,7 @@ def handle_header(self, line):
       # lower right corner
       title.set('x', str(1 * self.width / 12.))
       title.set('y', str(1 * self.height / 12.))
-      style = {'font-size': '36px',  'font-family': 'TeX Gyre Pagella'}
+      style = {'font-size': '36px',  'font-family': 'Source Serif Pro'}
       title.set('style', formatStyle(style))
       self.layer.append(title)
     else:
@@ -63,11 +68,12 @@ def handle_text(self, line):
     if already_existing_text is None:
       text = inkex.etree.Element(inkex.addNS('text','svg'))
       text.text = line
+      text.set(inkex.addNS('myId','md2i'), "md2i_layer%i_text%i" % (self.layercounter, self.textcounter))
       text.set('x', str(self.width / 10.))
       text.set('y', str(self.textcounter * self.height / 15. + self.height/3.5))
       text.set('id', "md2i_layer%i_text%i" % (self.layercounter, self.textcounter))
       #style = {'text-align' : 'center', 'text-anchor': 'middle'}
-      style = {'font-size': '28px',  'font-family': 'TeX Gyre Pagella'}
+      style = {'font-size': '28px',  'font-family': 'Source Serif Pro'}
       text.set('style', formatStyle(style))
       self.layer.append(text)
     else:
@@ -90,6 +96,10 @@ def handle_image(self, src):
       already_existing_image.set(inkex.addNS('href','xlink'), src)
       already_existing_image.set(inkex.addNS('absref','sodipodi'), os.environ['PWD'] + '/' + src) 
     self.imagecounter +=1
+
+def handle_math(self, text, packages=""):
+    latex_effect(self, text, packages) 
+    return "m"
 
 class InkslideRenderer(mistune.Renderer):
     """ modifies svg, dummy string output not needed"""
@@ -129,6 +139,16 @@ class InkslideRenderer(mistune.Renderer):
     def list_item(self, text):
         handle_text(self, text)
         return "li"
+    def block_math(self, text):
+        handle_math(self, text, "")
+        return 'm' % text
+    def latex_environment(self, name, text):
+        handle_text(self, text)
+        return 'm'
+    def inline_math(self, text):
+        handle_math(self,  text, "")
+        return 'm'
+
 
 class Markdown2InkslidesEffect(inkex.Effect):
     def __init__(self):
@@ -141,8 +161,8 @@ class Markdown2InkslidesEffect(inkex.Effect):
 
         # Define string option "--what" with "-w" shortcut and default value "World".
         self.OptionParser.add_option('-w', '--what', action = 'store',
-          type = 'string', dest = 'what', default = 'World',
-          help = 'What would you like to greet?')
+          type = 'string', dest = 'what', default = 'test.md',
+          help = 'Which markdown file do you want to turn to slides?')
 
     def effect(self):
         """
@@ -153,7 +173,7 @@ class Markdown2InkslidesEffect(inkex.Effect):
         what = self.options.what # filename of markdown file
 
         renderer = InkslideRenderer(self)
-        markdown = mistune.Markdown(renderer=renderer)
+        markdown = MarkdownWithMath(renderer=renderer)
         with open(what, 'r') as f:
             test = markdown(f.read())
             # does roughly the same as 
