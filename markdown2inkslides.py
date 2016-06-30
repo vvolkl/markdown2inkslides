@@ -7,6 +7,7 @@ import os
 sys.path.append('/usr/share/inkscape/extensions')
 
 
+
 # We will use the inkex module with the predefined Effect base class.
 import inkex
 
@@ -16,6 +17,7 @@ from simplestyle import *
 import mistune
 
 from my_eqtexsvg import *
+from my_inksyntax import *
 from mistune_math import MarkdownWithMath
 
 def debug_print(msg):
@@ -101,6 +103,10 @@ def handle_math(self, text, packages=""):
     latex_effect(self, text, packages) 
     return "m"
 
+def handle_code(self, text, packages=""):
+    inserter(self, 'Python', text)
+    return "c"
+
 class InkslideRenderer(mistune.Renderer):
     """ modifies svg, dummy string output not needed"""
     def __init__(self, inkex_effect):
@@ -124,8 +130,11 @@ class InkslideRenderer(mistune.Renderer):
     def autolink(self, link, is_email=False):
         handle_text(self, link)
         return "a"
+    def block_code(self, code, lang):
+        handle_code(self, code)
+        return "c"
     def codespan(self, text):
-        handle_text(self, text)
+        handle_code(self, text)
         return "a"
     def double_emphasis(self, text):
         handle_text(self, text)
