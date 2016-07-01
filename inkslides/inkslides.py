@@ -373,7 +373,7 @@ class InkSlides(object):
                 if len(layer) == 1:
                     layer.append('1.0')
 
-                self.show_layer(tmp_layers[layer[0]], layer[1])
+                self.show_layer(tmp_layers[layer[0]], 1.0)
 
             # add the hidden elements to the to-delete list
             to_be_deleted = tmp_doc.xpath(
@@ -444,7 +444,7 @@ class InkSlides(object):
         # The variable ready keeps track of that.
         ready = False
         counter = 0
-        num_all = len(self.svg_files)
+        num_all = len(self.svg_files) + 1
         while True:
             if ready:
                 if not len(self.svg_files):
@@ -466,6 +466,8 @@ class InkSlides(object):
                     command = '-A "{1}" "{0}"\n'.format(svg_file, pdf_file)
                     ink.stdin.write(command.encode("UTF-8"))
                     ink.stdin.flush()
+                    time.sleep(0.3)
+                    print(command) 
 
                     print("  Converted {0} ({1:d}%)".format(
                         pdf_file, percent
@@ -496,7 +498,6 @@ class InkSlides(object):
         array is being filled with the description of each slides 
         content.
         """
-
         content_lines = self.doc.xpath(
             '//svg:g[@inkscape:groupmode="layer"][\
             @inkscape:label="content"]/svg:text/svg:tspan[text()]',
@@ -504,13 +505,13 @@ class InkSlides(object):
         )
 
         layers = list()
-        for x in [l.text.strip() for l in content_lines]:
+        for x in self.get_layers(self.doc).keys()[::-1]:#[l.text.strip() for l in content_lines]:
             cache = list()
 
             # if the line starts with a +, copy the last slide first
-            if x.startswith('+'):
-                cache = copy.copy(layers[-1])
-                x = x[1:]
+            #if x.startswith('+'):
+            #    cache = copy.copy(layers[-1])
+            #    x = x[1:]
 
             # this is a bit cryptic. It decodes each slide and the 
             # corresponding opacity and writes in into the list.
