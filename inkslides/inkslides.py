@@ -506,19 +506,21 @@ class InkSlides(object):
 
         layers = list()
         for x in self.get_layers(self.doc).keys()[::-1]:#[l.text.strip() for l in content_lines]:
-            cache = list()
+            if x != 'background':
+              x = 'background,' + x 
+              cache = list()
 
-            # if the line starts with a +, copy the last slide first
-            #if x.startswith('+'):
-            #    cache = copy.copy(layers[-1])
-            #    x = x[1:]
+              # if the line starts with a +, copy the last slide first
+              #if x.startswith('+'):
+              #    cache = copy.copy(layers[-1])
+              #    x = x[1:]
 
-            # this is a bit cryptic. It decodes each slide and the 
-            # corresponding opacity and writes in into the list.
-            cache.extend([[d.strip() for d in c.split('*')]
-                          for c in x.split(',')])
+              # this is a bit cryptic. It decodes each slide and the 
+              # corresponding opacity and writes in into the list.
+              cache.extend([[d.strip() for d in c.split('*')]
+                            for c in x.split(',')])
 
-            layers.append(cache)
+              layers.append(cache)
 
         return layers
 
