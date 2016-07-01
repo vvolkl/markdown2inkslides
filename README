@@ -1,0 +1,20 @@
+
+markdown2inkslides
+------
+
+
+this inkscape extension plugs together several other extensions and external packages to use a markdown text file as source for the content of simple presentation slides
+external and modified packages:
+
+* mistune
+* eq2svg
+* inksyntax
+* inkslides
+
+Instalation
+-----
+
+install mistune (`pip install mistune`), clone repo and make symlinks to the extension files mardown2inkslides.[py|inx] in the inkscape extension directory. the `./makesymlinks` script may be used.
+To use LaTeX, `texlive` and `pstoedit` need to be installed, `python-pygments` for syntax highlighting.
+Then simply choose Slides->Markdown2Inkslides from the Extension menu.
+Position elements and export to pdf using `./inkslides/inkslides.py <name_of_svg_file>`
