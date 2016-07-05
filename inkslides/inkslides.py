@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -=- encoding: utf-8 -=-
 
+#vvolkl: slightly simplified for use with markdown
+
+
 """
 # InkSlides
 
@@ -73,6 +76,7 @@ import shutil
 import hashlib
 import sys
 import time
+from collections import OrderedDict
 
 
 __author__ = "Jan Oliver Oelerich"
@@ -343,9 +347,20 @@ class InkSlides(object):
         """
         parser = xml.XMLParser(ns_clean=True, huge_tree=True)
         self.doc = xml.parse(self.f_input, parser)
+        layers = self.doc.xpath(
+            '//svg:g[@inkscape:groupmode="layer"]',
+            namespaces=self.nsmap
+        )
+
+        for i, layer in enumerate(layers[::]):
+            if i > 0 and self.get_attr(layer, 'label') != 'background': 
+              
+              slidenumber = xml.Element('text', style="font-size:20px;font-family:'Source Serif Pro'", x="30", y="30" )
+              slidenumber.text = str(i)
+              layer.append(slidenumber) 
 
         # find the content descriptor, i.e., which slides to include when + how
-        self.content = self.get_content_description()
+        self.content = self.get_content_description_simple()
 
         # set all elements in the pdf to hidden
         self.hide_all(self.doc)
@@ -492,37 +507,24 @@ class InkSlides(object):
         merger = MergerWrapper()
         merger.merge(self.pdf_files, self.f_output)
 
-    def get_content_description(self):
+    def get_content_description_simple(self):
         """
         Here, the "content" layer is parsed and the self.content
         array is being filled with the description of each slides 
         content.
         """
-        content_lines = self.doc.xpath(
-            '//svg:g[@inkscape:groupmode="layer"][\
-            @inkscape:label="content"]/svg:text/svg:tspan[text()]',
-            namespaces=self.nsmap
-        )
-
         layers = list()
-        for x in self.get_layers(self.doc).keys()[::-1]:#[l.text.strip() for l in content_lines]:
+        for x in self.get_layers(self.doc).keys():
             if x != 'background':
               x = 'background,' + x 
               cache = list()
-
-              # if the line starts with a +, copy the last slide first
-              #if x.startswith('+'):
-              #    cache = copy.copy(layers[-1])
-              #    x = x[1:]
-
               # this is a bit cryptic. It decodes each slide and the 
               # corresponding opacity and writes in into the list.
               cache.extend([[d.strip() for d in c.split('*')]
                             for c in x.split(',')])
-
               layers.append(cache)
-
         return layers
+
 
     def get_layers(self, doc):
         """
@@ -531,7 +533,7 @@ class InkSlides(object):
         value is the lxml.Element object of the layer.
         """
 
-        ret = dict()
+        ret = OrderedDict()
 
         layers = doc.xpath(
             '//svg:g[@inkscape:groupmode="layer"]',
@@ -539,8 +541,8 @@ class InkSlides(object):
         )
 
         for layer in layers:
+            print self.get_attr(layer, 'label')
             ret[self.get_attr(layer, 'label')] = layer
-
         return ret
 
     def show_layer(self, layer, opacity=1.0):
