@@ -35,18 +35,18 @@ def handle_header(self, line):
       self.layer.set(inkex.addNS('groupmode', 'inkscape'), 'layer')
       self.layer.set('id', 'md2i_layer%i' % (self.layercounter) )
       # write slide number
-      text = inkex.etree.Element(inkex.addNS('text','svg'))
-      text.set('id', 'md2i_layer%i_slidenumber' % (self.layercounter) )
-      text.text = str(self.layercounter)
-      style = {'font-size': '20px',  'font-family': 'Source Serif Pro'}
-      text.set('style', formatStyle(style))
-      # lower right corner
-      text.set('x', str(11.5 * self.width / 12.))
-      text.set('y', str(11.5 * self.height / 12.))
-      self.layer.append(text)
+      #text = inkex.etree.Element(inkex.addNS('text','svg'))
+      #text.set('id', 'md2i_layer%i_slidenumber' % (self.layercounter) )
+      #text.text = str(self.layercounter)
+      #style = {'font-size': '20px',  'font-family': 'Source Serif Pro'}
+      #text.set('style', formatStyle(style))
+      ## lower right corner
+      #text.set('x', str(11.5 * self.width / 12.))
+      #text.set('y', str(11.5 * self.height / 12.))
+      #self.layer.append(text)
       # write title
       title = inkex.etree.Element(inkex.addNS('text','svg'))
-      title.set('id', 'layer%i_title' % (self.layercounter) )
+      title.set('id', 'md2i_layer%i_title' % (self.layercounter) )
       title.text = titletext
       # lower right corner
       title.set('x', str(1 * self.width / 12.))
@@ -65,7 +65,9 @@ def handle_header(self, line):
     self.textcounter = 0
     self.imagecounter = 0
 
-def handle_text(self, line):
+def handle_text(self, line, 
+        style={'font-size': '28px',  
+          'font-family': 'Source Serif Pro'}):
     already_existing_text = self.svg.find('.//{http://www.w3.org/2000/svg}text[@id="md2i_layer%i_text%i"]' % (self.layercounter, self.textcounter))
     if already_existing_text is None:
       text = inkex.etree.Element(inkex.addNS('text','svg'))
@@ -75,7 +77,6 @@ def handle_text(self, line):
       text.set('y', str(self.textcounter * self.height / 15. + self.height/3.5))
       text.set('id', "md2i_layer%i_text%i" % (self.layercounter, self.textcounter))
       #style = {'text-align' : 'center', 'text-anchor': 'middle'}
-      style = {'font-size': '28px',  'font-family': 'Source Serif Pro'}
       text.set('style', formatStyle(style))
       self.layer.append(text)
     else:
@@ -85,10 +86,15 @@ def handle_text(self, line):
 def handle_image(self, src):
     already_existing_image = self.svg.find('.//{http://www.w3.org/2000/svg}image[@id="md2i_layer%i_image%i"]' % (self.layercounter, self.imagecounter))
     if already_existing_image is None:
+      #with open(src) as imagefile:
+      #    imgwidth, imgheight = Image.open(imagefile).size
+      #maxwidth, maxheight = self.width / 1.3, self.height / 1.3
+
       image = inkex.etree.Element(inkex.addNS('image','svg'))
       image.set(inkex.addNS('href','xlink'), src)
       image.set(inkex.addNS('absref','sodipodi'), os.environ['PWD'] + '/' + src) 
       image.set('x', str(self.width / 10.))
+      image.set('height', str(self.height / 2.5))
       image.set('y', str(self.height / 3.5))
       image.set('id', 'md2i_layer%i_image%i' % (self.layercounter, self.imagecounter))
       style = {'image-align' : 'center', 'image-anchor': 'middle'}
@@ -100,7 +106,7 @@ def handle_image(self, src):
     self.imagecounter +=1
 
 def handle_math(self, text, packages=""):
-    latex_effect(self, text, packages) 
+    latex_effect(self, '$' + text + "$", packages) 
     return "m"
 
 def handle_code(self, text, packages=""):
@@ -126,10 +132,10 @@ class InkslideRenderer(mistune.Renderer):
         return "p"
     def image(self, src, title, alt_text):
         handle_image(self, src)
-        return "i"
+        return ""
     def autolink(self, link, is_email=False):
-        handle_text(self, link)
-        return "a"
+        handle_text(self, link, style={'font-size': '20pt', 'font-family': "Source Code Pro", 'fill': "#6495ED"})
+        return ""
     def block_code(self, code, lang):
         handle_code(self, code)
         return "c"
@@ -146,7 +152,7 @@ class InkslideRenderer(mistune.Renderer):
         handle_text(self, text)
         return "a"
     def list_item(self, text):
-        handle_text(self, text)
+        handle_text(self, u"\t \u2022 \t" + text)
         return "li"
     def block_math(self, text):
         handle_math(self, text, "")
